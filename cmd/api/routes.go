@@ -8,6 +8,10 @@ import (
 
 func (app *application) routes() http.Handler {
 	router := httprouter.New()
+	// convert methodNotAllowedResponse and notFoundResponse funcs to http.Handler
+	// to satisfy the interface
+	router.NotFound = http.HandlerFunc(app.notFoundResponse)
+	router.MethodNotAllowed = http.HandlerFunc(app.methodNotAllowedResponse)
 
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthCheckHandler)
 	router.HandlerFunc(http.MethodPost, "/v1/movies", app.createMovieHandler)
