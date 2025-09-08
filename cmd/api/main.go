@@ -20,7 +20,10 @@ type config struct {
 	port int
 	env  string //development, staging, production
 	db   struct {
-		dsn string
+		dsn          string
+		maxOpenConns int
+		maxIdleCons  int
+		maxIdleTime  time.Duration
 	}
 }
 
@@ -36,11 +39,17 @@ func main() {
 	//read value of port and env from command line
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development | staging | production)")
-	flag.Parse()
 
 	// read the DSN value from db-dsn command-line flag
-	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgres://greenlight:pa55word@localhost:5432/greenlight?sslmode=disable", "PostgreSQL DSN")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("GREENLIGHT_DB_DSN"), "PostgreSQL DSN")
 
+	// Read connection pool settings from command-line flags
+
+	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "Postgresql max open connections")
+	flag.IntVar(&cfg.db.maxIdleCons, "db-max-idle-conns", 25, "Postgresql max idle connections")
+	flag.DurationVar(&cfg.db.maxIdleTime, "db-max-idle-time", 15*time.Minute, "Postgresql max connection idle time")
+
+	flag.Parse()
 	// initialize logger
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
@@ -81,6 +90,12 @@ func openDB(cfg config) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	// set maximum of inuse + idle connections
+	db.SetMaxOpenConns(cfg.db.maxOpenConns)
+	//  set maximum number of idle connections
+	db.SetMaxIdleConns(cfg.db.maxIdleCons)
+	// set maximum idle timeout for connection in the pool
+	db.SetConnMaxIdleTime(cfg.db.maxIdleTime)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
