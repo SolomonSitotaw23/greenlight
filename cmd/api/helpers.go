@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -50,13 +51,21 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 }
 
 func (app *application) readJson(w http.ResponseWriter, r *http.Request, dst any) error {
+	// limit the size of request body to `1,048,576(1MB)` to protect from DOS
+	r.Body = http.MaxBytesReader(w, r.Body, 1_048_146)
+
+	// to disallow requests out of our dst (this will throw an error if a user sends additional fields )
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+
 	// Decode the request body to the target destination
-	err := json.NewDecoder(r.Body).Decode(dst)
+	err := dec.Decode(dst)
 	if err != nil {
 		//if there is an error during decoding
 		var syntaxError *json.SyntaxError
 		var unmarshalTypeError *json.UnmarshalTypeError
 		var invalidUnmarshalError *json.InvalidUnmarshalError
+		var MaxBytesError *http.MaxBytesError
 
 		switch {
 		case errors.As(err, &syntaxError):
@@ -79,6 +88,13 @@ func (app *application) readJson(w http.ResponseWriter, r *http.Request, dst any
 		// for empty request
 		case errors.Is(err, io.EOF):
 			return errors.New("body must not be empty ")
+		// if the json contains field that can not be mapped to the target dst
+		case strings.HasPrefix(err.Error(), "json:unknown field"):
+			fieldName := strings.TrimPrefix(err.Error(), "json: unknown field")
+			return fmt.Errorf("body contains unknown key %s ", fieldName)
+		// if the request body exceeds our size limit
+		case errors.As(err, &MaxBytesError):
+			return fmt.Errorf("body must not be larger than %d bytes", MaxBytesError.Limit)
 
 		case errors.As(err, &invalidUnmarshalError):
 			panic(err)
@@ -87,6 +103,11 @@ func (app *application) readJson(w http.ResponseWriter, r *http.Request, dst any
 			return err
 		}
 
+	}
+	// check if the request body has additional JSON value
+	err = dec.Decode(&struct{}{})
+	if !errors.Is(err, io.EOF) {
+		return errors.New("body must be only contain single JSON value")
 	}
 	return nil
 }
