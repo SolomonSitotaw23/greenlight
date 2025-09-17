@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"sync"
 
+	"github.com/tomasen/realip"
 	"golang.org/x/time/rate"
 )
 
@@ -26,13 +28,32 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 		})
 }
 
+// Global and Ip rate limiter
 func (app *application) rateLimit(next http.Handler) http.Handler {
-	limiter := rate.NewLimiter(2, 4)
+
+	var (
+		mu      sync.Mutex
+		clients = make(map[string]*rate.Limiter)
+	)
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !limiter.Allow() {
+		ip := realip.FromRequest(r)
+
+		// Lock the mutex to prevent this code from being executed concurrently.
+		mu.Lock()
+
+		if _, found := clients[ip]; !found {
+			clients[ip] = rate.NewLimiter(2, 4)
+		}
+		// Call the Allow() method on the rate limiter for the current IP address. If
+		// the request isn't allowed, unlock the mutex and send a 429 Too Many Requests
+		// response
+		if !clients[ip].Allow() {
+			mu.Unlock()
 			app.rateLimitExceededResponse(w, r)
 			return
 		}
+		mu.Unlock()
 		next.ServeHTTP(w, r)
 	})
 }
