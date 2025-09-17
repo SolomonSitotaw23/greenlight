@@ -26,6 +26,12 @@ type config struct {
 		maxIdleCons  int
 		maxIdleTime  time.Duration
 	}
+
+	limiter struct {
+		rps    float64 //request per second
+		burst  int     //bucket size
+		enable bool    //enable disable rate limiter
+	}
 }
 
 // dependencies for http handlers
@@ -46,10 +52,14 @@ func main() {
 	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("GREENLIGHT_DB_DSN"), "PostgreSQL DSN")
 
 	// Read connection pool settings from command-line flags
-
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "Postgresql max open connections")
 	flag.IntVar(&cfg.db.maxIdleCons, "db-max-idle-conns", 25, "Postgresql max idle connections")
 	flag.DurationVar(&cfg.db.maxIdleTime, "db-max-idle-time", 15*time.Minute, "Postgresql max connection idle time")
+
+	// read config for the rate limiter
+	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
+	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
+	flag.BoolVar(&cfg.limiter.enable, "limiter-enable", true, "Enable rate limiter")
 
 	flag.Parse()
 	// initialize logger
