@@ -151,3 +151,18 @@ func (app *application) readInt(qs url.Values, key string, defaultValue int, v *
 
 	return i
 }
+
+// run a func as a go routine and prevent panic
+
+func (app *application) background(fn func()) {
+	// launch a background go routine
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				app.logger.Error(fmt.Sprintf("%v", err))
+			}
+		}()
+		// Executing the the function
+		fn()
+	}()
+}
