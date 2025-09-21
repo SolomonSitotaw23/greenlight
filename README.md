@@ -16,7 +16,7 @@ Greenlight is a RESTful API server for managing movies and users, built with Go 
 
 - **Go** (1.24+)
 - **PostgreSQL**
-- **SMTP** (for email)
+- **MAIL Trap / SMTP** (for email)
 - **Libraries**:
   - [github.com/julienschmidt/httprouter](https://github.com/julienschmidt/httprouter) (routing)
   - [github.com/lib/pq](https://github.com/lib/pq) (PostgreSQL driver)
@@ -46,6 +46,7 @@ Greenlight is a RESTful API server for managing movies and users, built with Go 
      ```
      export GREENLIGHT_DB_DSN="postgres://user:password@localhost:5432/greenlight?sslmode=disable"
      ```
+     this is the default
 
 3. **Run migrations:**
    - Use a migration tool (e.g., [golang-migrate](https://github.com/golang-migrate/migrate)) to apply migrations in the `migrations/` folder:
