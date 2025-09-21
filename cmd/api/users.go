@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/solomonsitotaw23/greenlight/internal/data"
@@ -53,6 +54,13 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 	// run send email in the background to decouple from the normal request
 	go func() {
+
+		defer func() {
+			if err := recover(); err != nil {
+				app.logger.Error(fmt.Sprintf("%v", err))
+			}
+		}()
+
 		err = app.mailer.Send(user.Email, "user_welcome.tmpl.html", user)
 		if err != nil {
 			app.logger.Error(err.Error())
