@@ -15,6 +15,8 @@ var (
 	ErrDuplicateEmail = errors.New("duplicate email")
 )
 
+var AnonymousUser = &User{}
+
 type User struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
@@ -28,6 +30,11 @@ type User struct {
 type password struct {
 	plaintext *string
 	hash      []byte
+}
+
+// Check if the user is anonymous
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
 }
 
 // The Set() method calculates the bcrypt hash of a plaintext password, and stores both
