@@ -6,6 +6,8 @@ Greenlight is a RESTful API server for managing movies and users, built with Go 
 
 - **Movies CRUD**: Create, read, update, and delete movies.
 - **User Registration**: Register new users with email verification.
+- **Authentication**: Secure token-based authentication for users.
+- **Token Management**: Issue, store, and validate authentication tokens.
 - **Email Sending**: Welcome emails sent via SMTP.
 - **Rate Limiting**: Per-IP rate limiting for API endpoints.
 - **Validation**: Input validation for movies and users.
@@ -16,7 +18,7 @@ Greenlight is a RESTful API server for managing movies and users, built with Go 
 
 - **Go** (1.24+)
 - **PostgreSQL**
-- **MAIL Trap / SMTP** (for email)
+- **SMTP** (for email)
 - **Libraries**:
   - [github.com/julienschmidt/httprouter](https://github.com/julienschmidt/httprouter) (routing)
   - [github.com/lib/pq](https://github.com/lib/pq) (PostgreSQL driver)
@@ -48,7 +50,6 @@ Greenlight is a RESTful API server for managing movies and users, built with Go 
      ```
      export GREENLIGHT_DB_DSN="postgres://user:password@localhost:5432/greenlight?sslmode=disable"
      ```
-     this is the default
 
 3. **Run migrations:**
 
@@ -76,7 +77,6 @@ You can configure the server using command-line flags or environment variables. 
 - `PATCH /v1/movies/:id` – Update movie
 - `DELETE /v1/movies/:id` – Delete movie
 - `POST /v1/users` – Register user
+- `POST /v1/tokens/authentication` – Obtain authentication token
 
 ## License
-
-MIT
