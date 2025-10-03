@@ -8,6 +8,8 @@ Greenlight is a RESTful API server for managing movies and users, built with Go 
 - **User Registration**: Register new users with email verification.
 - **Authentication**: Secure token-based authentication for users.
 - **Token Management**: Issue, store, and validate authentication tokens.
+- **Role-Based Access Control**: Assign and check permissions for users.
+- **Permissions Management**: Add and retrieve permissions for users.
 - **Email Sending**: Welcome emails sent via SMTP.
 - **Rate Limiting**: Per-IP rate limiting for API endpoints.
 - **Validation**: Input validation for movies and users.
@@ -78,5 +80,10 @@ You can configure the server using command-line flags or environment variables. 
 - `DELETE /v1/movies/:id` – Delete movie
 - `POST /v1/users` – Register user
 - `POST /v1/tokens/authentication` – Obtain authentication token
+- **Permissions Endpoints** (example):
+  - `GET /v1/users/:id/permissions` – Get all permissions for a user
+  - `POST /v1/users/:id/permissions` – Add permissions to a user
 
 ## License
+
+MIT
